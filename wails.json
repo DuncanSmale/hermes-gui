@@ -1,0 +1,13 @@
+{
+  "name": "hermes-gui",
+  "outputfilename": "hermes-gui",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "assetdir": "./frontend/dist",
+  "author": {
+    "name": "DuncanSmale",
+    "email": "duncan.smale@gmail.com"
+  }
+}
