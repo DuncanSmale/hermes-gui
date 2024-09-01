@@ -1,13 +1,14 @@
-import type { Component } from "solid-js";
 import {
   ColorModeProvider,
   ColorModeScript,
   createLocalStorageManager,
 } from "@kobalte/core";
-import Profiles from "./Profiles";
+import type { Component } from "solid-js";
 import { ModeToggle } from "./DarkModeToggle";
+import Profiles from "./Profiles";
 import ProfileProvider from "./ProfilesStore";
 import { ProjectSelect } from "./ProjectSelect";
+import { Separator } from "./components/ui/separator";
 
 const App: Component = () => {
   const storageManager = createLocalStorageManager("vite-ui-theme");
@@ -23,6 +24,7 @@ const App: Component = () => {
                 <div class="ml-auto">
                   <ModeToggle />
                 </div>
+                <Separator class="my-4" />
               </div>
               <div class="mt-[10vh] h-[60vh] flex flex-col items-center justify-center">
                 <Profiles />

@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"embed"
 	"log"
+	"os"
+	"time"
+
+	_ "modernc.org/sqlite"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -17,9 +23,60 @@ var assets embed.FS
 //go:embed build/appicon.png
 var icon []byte
 
+var DB *sql.DB
+
+func Connect(path string) {
+	createDb := false
+	if _, err := os.Stat(path); err != nil {
+		file, err := os.Create(path)
+		checkError(err)
+		file.Close()
+		createDb = true
+	}
+	db, err := sql.Open("sqlite", path)
+	checkError(err)
+	time.Sleep(time.Millisecond * 2000)
+	DB = db
+	if createDb {
+		deploy()
+	}
+}
+
+func deploy() {
+	_, err := DB.ExecContext(
+		context.Background(),
+		`CREATE TABLE IF NOT EXISTS profile(
+      id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+      projectName varchar(50),
+      profileName varchar(50), 
+      isSelected bit)`,
+	)
+	checkError(err)
+	q, err := DB.ExecContext(
+		context.Background(),
+		`INSERT INTO profile
+      (projectName, profileName, isSelected) 
+    VALUES  
+      ('testing project', 'tesitng', 1),
+      ('testing project', 'testing 2', 1),
+      ('testing project', 'testing 3', 1)`,
+	)
+	val, err := q.LastInsertId()
+	log.Printf("%d", val)
+	checkError(err)
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+}
+
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
+	Connect("./test.db")
 
 	// Create application with options
 	err := wails.Run(&options.App{
@@ -100,14 +157,65 @@ type CoreData struct {
 	CurrentProject string             `json:"currentProject"`
 }
 
+type ProjectDbRow struct {
+	ID int
+	ProfileDb
+}
+
+type ProfileDb struct {
+	ProjectName string
+	ProfileName string
+	IsSelected  bool
+}
+
+func getAllProfiles() (CoreData, error) {
+	Connect("./test.db")
+	var allProfiles []ProjectDbRow
+	rows, err := DB.QueryContext(
+		context.Background(),
+		`SELECT * FROM profile`,
+	)
+	checkError(err)
+	defer rows.Close()
+	log.Print(rows)
+	for rows.Next() {
+
+		var profile ProjectDbRow
+
+		if err := rows.Scan(
+			&profile.ID, &profile.ProjectName, &profile.ProfileName, &profile.IsSelected,
+		); err != nil {
+			checkError(err)
+		}
+		allProfiles = append(allProfiles, profile)
+	}
+	active := ""
+	projects := make(map[string]Project)
+	for _, profile := range allProfiles {
+		newProfile := ProfileEntity{Id: profile.ID, ProfileName: profile.ProfileName, IsSelected: profile.IsSelected}
+		_, ok := projects[profile.ProjectName]
+		if !ok {
+			projects[profile.ProjectName] = Project{Name: profile.ProjectName, Profiles: make([]ProfileEntity, 0)}
+		}
+		if active == "" {
+			active = profile.ProjectName
+		}
+
+		project := projects[profile.ProjectName]
+		project.Profiles = append(project.Profiles, newProfile)
+		projects[profile.ProjectName] = project
+	}
+
+	data = CoreData{CurrentProject: active, Projects: projects}
+
+	return data, err
+}
+
 var data CoreData
 
 func (a *App) LoadInitialData() *CoreData {
-	testProfile := ProfileEntity{ProfileName: "testing", IsSelected: true}
-	projects := make(map[string]Project)
-	projects["default"] = Project{Name: "default", Profiles: []ProfileEntity{testProfile}}
-	data.Projects = projects
-	data = CoreData{CurrentProject: "default", Projects: projects}
+	data, _ = getAllProfiles()
+
 	return &data
 }
 

@@ -18,6 +18,7 @@ const Profiles: Component = () => {
   const { coreData, setCoreData }: ProfileStoreType = useProfile();
   onMount(async () => {
     let result = await LoadInitialData();
+    console.log(result);
     setCoreData(result);
   });
   const [newProfile, setNewProfile] = createSignal("");
@@ -71,23 +72,21 @@ const Profiles: Component = () => {
         />
       </TextField>
       <main class="flex-grow space-y-4">
-        <ErrorBoundary fallback={<div>Something went wrong!</div>}>
-          <Suspense fallback={<div>Loading...</div>}>
-            <For
-              each={coreData.projects[`${coreData.currentProject}`].profiles}
-              fallback={<div>No items</div>}
-            >
-              {(item, index) => (
-                <Profile
-                  id={`${index()}`}
-                  profile={item}
-                  onDelete={(profile) => removeProfile(profile)}
-                  onChange={(profile) => updateProfile(profile)}
-                />
-              )}
-            </For>
-          </Suspense>
-        </ErrorBoundary>
+        <Suspense fallback={<div>Loading...</div>}>
+          <For
+            each={coreData.projects[`${coreData.currentProject}`].profiles}
+            fallback={<div>No items</div>}
+          >
+            {(item, index) => (
+              <Profile
+                id={`${index()}`}
+                profile={item}
+                onDelete={(profile) => removeProfile(profile)}
+                onChange={(profile) => updateProfile(profile)}
+              />
+            )}
+          </For>
+        </Suspense>
       </main>
       <footer class="space-y-4 items-center">
         <div id={"inputDiv"}>
