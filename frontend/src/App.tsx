@@ -24,9 +24,9 @@ const App: Component = () => {
                 <div class="ml-auto">
                   <ModeToggle />
                 </div>
-                <Separator class="my-4" />
               </div>
-              <div class="mt-[10vh] h-[60vh] flex flex-col items-center justify-center">
+              <Separator class="my-4" />
+              <div class="flex flex-col items-center justify-center">
                 <Profiles />
               </div>
             </div>

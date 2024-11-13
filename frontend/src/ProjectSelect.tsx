@@ -22,6 +22,8 @@ export function ProjectSelect() {
         projectState.currentProject = projectName;
         if (projectState.projects[projectName] == null) {
           projectState.projects[projectName] = new main.Project();
+          projectState.projects[projectName].profiles = [];
+          projectState.projects[projectName].name = projectName;
         }
       }),
     );
