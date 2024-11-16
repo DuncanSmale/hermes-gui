@@ -18,19 +18,19 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: "Hermes"
+          - name: "hermes-gui-linux"
             platform: "linux/amd64"
             os: "ubuntu-latest"
             nsis: true
-          - name: "Hermes"
+          - name: "hermes-gui-installer.exe"
             platform: "windows/amd64"
             os: "windows-latest"
             nsis: true
-          - name: "Hermes"
+          - name: "hermes-gui.exe"
             platform: "windows/amd64"
             os: "windows-latest"
             nsis: false
-          - name: "Hermes"
+          - name: "hermes-gui-darwin"
             platform: "darwin/universal"
             os: "macos-latest"
             nsis: true
