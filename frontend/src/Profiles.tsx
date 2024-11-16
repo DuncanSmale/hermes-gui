@@ -1,75 +1,101 @@
+import { debounce } from "@solid-primitives/scheduled";
 import {
   Component,
   For,
   Index,
-  Suspense,
   createEffect,
   createSignal,
   onMount,
 } from "solid-js";
 import { produce } from "solid-js/store";
-import { LoadInitialData } from "../wailsjs/go/main/App.js";
+import {
+  LoadInitialData,
+  SaveProject,
+  SaveProfile,
+  DeleteProfile,
+} from "../wailsjs/go/main/App.js";
 import { main } from "../wailsjs/go/models";
+import { useProject } from "./ActiveProfiles.jsx";
 import Profile from "./Profile";
-import { ProfileStoreType, useProfile } from "./ProfilesStore";
-import { Button } from "./components/ui/button";
+import { useProfile } from "./ProfilesStore";
 import { TextField, TextFieldInput } from "./components/ui/text-field";
 
 const Profiles: Component = () => {
-  const { coreData, setCoreData }: ProfileStoreType = useProfile();
-  const [currentProfiles, setCurrentProfiles] = createSignal(
-    coreData?.projects[coreData?.currentProject]?.profiles || [],
+  const { project, setProject } = useProject();
+  const { coreData, setCoreData } = useProfile();
+  const [profiles, setProfiles] = createSignal(project().profiles);
+  const triggerProjectUpdate = debounce(
+    (newProjectName: string) => renameProject(newProjectName),
+    250,
   );
-  createEffect(() => {
-    console.log(coreData.currentProject);
-    setCurrentProfiles(
-      coreData?.projects[coreData?.currentProject]?.profiles || [],
-    );
-  });
+  const triggerProfileUpdate = debounce(
+    (profile: main.ProfileEntity) => updateProfile(profile),
+    250,
+  );
 
   createEffect(() => {
     console.log(coreData.currentProject);
-    setCoreData(
-      "projects",
-      coreData.currentProject,
-      "profiles",
-      currentProfiles(),
-    );
+    setProject(coreData.projects[coreData.currentProject]);
   });
   onMount(async () => {
     let result = await LoadInitialData();
     console.log(result);
     setCoreData(result);
+    setProject(coreData.projects[coreData.currentProject]);
   });
 
-  const [newProfile, setNewProfile] = createSignal("");
-  const updateProfile = (profile: main.ProfileEntity) => {
-    console.log("Updated", profile);
+  createEffect(() => {
+    console.log("Project updated: ", project());
+    setProfiles(project().profiles);
     setCoreData(
       "projects",
       coreData.currentProject,
       "profiles",
-      (profileToCheck: main.ProfileEntity) => profileToCheck.id === profile.id,
-      produce((updatedProfile: main.ProfileEntity) => {
-        updatedProfile.profileName = profile.profileName;
-        updatedProfile.isSelected = profile.isSelected;
-      }),
+      project().profiles,
     );
+  });
+
+  const updateProfile = (profile: main.ProfileEntity) => {
+    console.log("Updated", profile);
+
+    setProject((old) => {
+      let newProject = new main.Project();
+      newProject.name = old.name;
+      newProject.profiles = [...old.profiles];
+      let newProfile = new main.ProfileEntity();
+      newProfile.profileName = profile.profileName;
+      newProfile.isSelected = profile.isSelected;
+      newProfile.id = profile.id;
+      const index = newProject.profiles.findIndex(
+        (check) => check.id == profile.id,
+      );
+      console.log(profile, index);
+      if (index != -1) {
+        newProject.profiles[index] = newProfile;
+      }
+
+      return newProject;
+    });
+    new Promise((_) =>
+      SaveProfile(profile.profileName, profile.isSelected, profile.id),
+    ).then();
   };
   const removeProfile = (profile: main.ProfileEntity) => {
     console.log("Deleted", profile);
-    // setCoreData(
-    //   "projects",
-    //   coreData.currentProject,
-    //   "profiles",
-    //   (profilesArray: main.ProfileEntity[]) =>
-    //     profilesArray.filter((p: main.ProfileEntity) => p.id !== profile.id),
-    // );
-    setCurrentProfiles((old) =>
-      old.filter((p: main.ProfileEntity) => p.id !== profile.id),
-    );
+    DeleteProfile(profile.id);
+
+    setProject((old) => {
+      let filteredProfiles = old.profiles.filter(
+        (p: main.ProfileEntity) => p.id !== profile.id,
+      );
+      let newProject = new main.Project();
+      newProject.profiles = filteredProfiles;
+      newProject.name = old.name;
+      return newProject;
+    });
   };
   const renameProject = (newProjectName: string) => {
+    let oldName = coreData.currentProject;
     console.log(
       `Renaming from: ${coreData.currentProject} -> ${newProjectName}`,
     );
@@ -81,13 +107,16 @@ const Profiles: Component = () => {
         state.currentProject = newProjectName;
       }),
     );
+    SaveProject(newProjectName, oldName);
   };
 
   return (
     <>
       <TextField
         class="pb-4"
-        onChange={(newProjectName: string) => renameProject(newProjectName)}
+        onChange={(newProjectName: string) =>
+          triggerProjectUpdate(newProjectName)
+        }
       >
         <TextFieldInput
           type="text"
@@ -96,75 +125,18 @@ const Profiles: Component = () => {
           value={coreData.currentProject}
         />
       </TextField>
-      <main class="flex-grow space-y-4">
-        <Index each={currentProfiles()}>
+      <main class="flex-grow space-y-4 mb-[10%]">
+        <Index each={profiles()} fallback={<div>No Profiles</div>}>
           {(item, index) => (
             <Profile
               id={`${index}`}
               profile={item()}
               onDelete={(profile) => removeProfile(profile)}
-              onChange={(profile) => updateProfile(profile)}
+              onChange={(profile) => triggerProfileUpdate(profile)}
             />
           )}
         </Index>
       </main>
-      <div class="fixed bottom-0 w-[100%] bg-black pt-2 pb-2">
-        <footer class="space-y-2 items-center w-[27%] m-auto">
-          <div id={"inputDiv"}>
-            <TextField onChange={(newValue: string) => setNewProfile(newValue)}>
-              <TextFieldInput
-                type="text"
-                id="profileName"
-                placeholder="new profile"
-                value={newProfile()}
-              />
-            </TextField>
-          </div>
-          <div
-            class="flex flex-row flex-wrap justify-between content-evenly space-x-2"
-            id={"addSingleDiv"}
-          >
-            <Button
-              id={"AddMultiple"}
-              onClick={() => {
-                let size =
-                  coreData?.projects[`${coreData.currentProject}`]?.profiles
-                    ?.length || 0;
-                const newProfiles: main.ProfileEntity[] = newProfile()
-                  .replace(" ", "")
-                  .replace("\n", "")
-                  .replace("\t", "")
-                  .split(",")
-                  .map((profileValue) => ({
-                    id: size++,
-                    isSelected: true,
-                    profileName: profileValue,
-                  }));
-                if (
-                  newProfiles.length > 0 &&
-                  newProfiles.at(0).profileName != ""
-                ) {
-                  setCurrentProfiles((old) => old.concat(newProfiles));
-                  for (let prof of newProfiles) {
-                    console.log(prof);
-                    // setCoreData(
-                    //   "projects",
-                    //   coreData.currentProject,
-                    //   "profiles",
-                    //   prof.id,
-                    //   prof,
-                    // );
-                  }
-                  setNewProfile("");
-                }
-              }}
-            >
-              Add Profile/s
-            </Button>
-            <Button>Generate String</Button>
-          </div>
-        </footer>
-      </div>
     </>
   );
 };
