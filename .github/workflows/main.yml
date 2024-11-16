@@ -2,8 +2,8 @@ name: Wails build
 on:
   push:
     tags:
-    # Match any new tag
-      - '*'
+      # Match any new tag
+      - "*"
 
 env:
   # Necessary for most environments as build failure can occur due to OOM issues
@@ -12,16 +12,16 @@ env:
 jobs:
   build:
     strategy:
-    # Failure in one platform build won't impact the others
+      # Failure in one platform build won't impact the others
       fail-fast: false
       matrix:
         build:
-          - name: 'Hermes'
-            platform:  'linux/amd64'
-            os: 'ubuntu-latest'
-          - name: 'Hermes'
-            platform:  'windows/amd64'
-            os: 'windows-latest'
+          - name: "Hermes"
+            platform: "linux/amd64"
+            os: "ubuntu-latest"
+          - name: "Hermes"
+            platform: "windows/amd64"
+            os: "windows-latest"
 
     runs-on: ${{ matrix.build.os }}
     steps:
@@ -30,6 +30,7 @@ jobs:
         with:
           submodules: recursive
 
+      - run: npm add @solid-primitives/clipboard
       - name: Build wails
         uses: dAppServer/wails-build-action@v2.2
         id: build
@@ -37,4 +38,4 @@ jobs:
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
           package: false
-          go-version: '1.22.2'
+          go-version: "1.22.2"
