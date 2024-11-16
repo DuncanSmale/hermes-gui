@@ -6,6 +6,7 @@ import (
 	"embed"
 	"log"
 	"os"
+	"path"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -25,9 +26,17 @@ var icon []byte
 
 var DB *sql.DB
 
+var appData, err = os.UserCacheDir()
+
+var (
+	dataDir          = path.Join(appData, "hermes")
+	connectionString = path.Join(dataDir, "data.db")
+)
+
 func Connect(path string) {
 	createDb := false
 	if _, err := os.Stat(path); err != nil {
+		os.MkdirAll(dataDir, os.ModePerm)
 		file, err := os.Create(path)
 		checkError(err)
 		file.Close()
@@ -35,7 +44,7 @@ func Connect(path string) {
 	}
 	db, err := sql.Open("sqlite", path)
 	checkError(err)
-	time.Sleep(time.Millisecond * 2000)
+	time.Sleep(time.Millisecond * 1000)
 	DB = db
 	if createDb {
 		deploy()
@@ -52,18 +61,6 @@ func deploy() {
       isSelected bit)`,
 	)
 	checkError(err)
-	q, err := DB.ExecContext(
-		context.Background(),
-		`INSERT INTO profile
-      (projectName, profileName, isSelected) 
-    VALUES  
-      ('testing project', 'tesitng', 1),
-      ('testing project', 'testing 2', 1),
-      ('testing project', 'testing 3', 1)`,
-	)
-	val, err := q.LastInsertId()
-	log.Printf("%d", val)
-	checkError(err)
 }
 
 func checkError(err error) {
@@ -76,7 +73,7 @@ func checkError(err error) {
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
-	Connect("./test.db")
+	Connect(connectionString)
 
 	// Create application with options
 	err := wails.Run(&options.App{
@@ -169,7 +166,7 @@ type ProfileDb struct {
 }
 
 func getAllProfiles() (CoreData, error) {
-	Connect("./test.db")
+	Connect(connectionString)
 	var allProfiles []ProjectDbRow
 	rows, err := DB.QueryContext(
 		context.Background(),
@@ -219,6 +216,36 @@ func (a *App) LoadInitialData() *CoreData {
 	return &data
 }
 
-func (a *App) SaveProject(project Project) {
-	data.Projects[project.Name] = project
+func (a *App) SaveProject(newProjectName string, oldProjectName string) {
+	DB.Exec("UPDATE profile SET projectName = ? where projectName = ? ", newProjectName, oldProjectName)
+}
+
+func (a *App) SaveProfile(newProfileName string, isSelected bool, id int) {
+	query := `
+  UPDATE profile 
+  SET profileName = ?, isSelected = ? 
+  WHERE id = ?
+  `
+	DB.Exec(query, newProfileName, isSelected, id)
+}
+
+func (a *App) DeleteProfile(id int) {
+	query := `
+  DELETE FROM profile 
+  WHERE id = ?
+  `
+	DB.Exec(query, id)
+}
+
+func (a *App) CreateNewProfile(projectName string, profileName string) int64 {
+	query := `
+  INSERT INTO profile 
+  (projectName, profileName, isSelected)
+  values (?, ?, true)
+  `
+	result, err := DB.Exec(query, projectName, profileName)
+	checkError(err)
+	id, err := result.LastInsertId()
+	checkError(err)
+	return id
 }

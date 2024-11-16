@@ -20,7 +20,7 @@ const NewProfile: Component = () => {
   const { coreData, setCoreData } = useProfile();
   const [newProfile, setNewProfile] = createSignal("");
   return (
-    <div class="fixed bottom-0 w-[100%] bg-black pt-2 pb-2">
+    <div class="fixed bottom-0 w-[100%] bg-gray-50 dark:bg-black pt-2 pb-2">
       <footer class="space-y-2 items-center w-[27%] m-auto">
         <div id={"inputDiv"}>
           <TextField onChange={(newValue: string) => setNewProfile(newValue)}>

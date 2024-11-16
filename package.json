@@ -1,6 +1,8 @@
 {
 	"dependencies": {
-		"@tanstack/solid-query": "^5.51.21",
+		"@solid-primitives/clipboard": "^1.5.10",
+		"@solid-primitives/scheduled": "^1.4.4",
+		"@tanstack/solid-query": "^5.60.5",
 		"solid-query": "^0.0.7"
 	}
 }
