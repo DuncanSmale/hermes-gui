@@ -1,8 +1,8 @@
 import { debounce } from "@solid-primitives/scheduled";
 import {
   Component,
-  For,
   Index,
+  Show,
   createEffect,
   createSignal,
   onMount,
@@ -34,25 +34,30 @@ const Profiles: Component = () => {
   );
 
   createEffect(() => {
-    console.log(coreData.currentProject);
+    console.log("current project changed ", coreData.currentProject);
     setProject(coreData.projects[coreData.currentProject]);
   });
+
   onMount(async () => {
     let result = await LoadInitialData();
     console.log(result);
-    setCoreData(result);
-    setProject(coreData.projects[coreData.currentProject]);
+    if (result != undefined) {
+      setCoreData(result);
+      setProject(coreData.projects[coreData.currentProject]);
+    }
   });
 
   createEffect(() => {
     console.log("Project updated: ", project());
-    setProfiles(project().profiles);
-    setCoreData(
-      "projects",
-      coreData.currentProject,
-      "profiles",
-      project().profiles,
-    );
+    if (project() != undefined) {
+      setProfiles(project()?.profiles || []);
+      setCoreData(
+        "projects",
+        coreData.currentProject,
+        "profiles",
+        project()?.profiles || [],
+      );
+    }
   });
 
   const updateProfile = (profile: main.ProfileEntity) => {
@@ -112,19 +117,21 @@ const Profiles: Component = () => {
 
   return (
     <>
-      <TextField
-        class="pb-4"
-        onChange={(newProjectName: string) =>
-          triggerProjectUpdate(newProjectName)
-        }
-      >
-        <TextFieldInput
-          type="text"
-          id="projectName"
-          placeholder="New project..."
-          value={coreData.currentProject}
-        />
-      </TextField>
+      <Show when={coreData.currentProject != null}>
+        <TextField
+          class="pb-4"
+          onChange={(newProjectName: string) =>
+            triggerProjectUpdate(newProjectName)
+          }
+        >
+          <TextFieldInput
+            type="text"
+            id="projectName"
+            placeholder="New project..."
+            value={coreData.currentProject}
+          />
+        </TextField>
+      </Show>
       <main class="flex-grow space-y-4 mb-[10%]">
         <Index each={profiles()} fallback={<div>No Profiles</div>}>
           {(item, index) => (

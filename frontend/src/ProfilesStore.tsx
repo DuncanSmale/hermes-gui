@@ -11,11 +11,7 @@ export type ProfileStoreType = {
 
 const ProfileProvider: ParentComponent = (props) => {
   let data = new main.CoreData();
-  let project = new main.Project();
-  project.name = "default";
-  project.profiles = [];
-  data.projects = { default: project };
-  data.currentProject = "";
+  data.projects = {};
   const [coreData, setCoreData] = createStore<main.CoreData>(data);
 
   return (

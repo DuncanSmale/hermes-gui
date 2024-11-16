@@ -27,14 +27,21 @@ export function ProjectSelect() {
         }
       }),
     );
+    console.log("this is the new current project", coreData.currentProject);
   };
+  // const projects = ;
+  // console.log(projects);
+  // projects.filter((name) => name != null);
 
   return (
     <div class="flex-col">
       <Select
         value={coreData.currentProject}
         onChange={updateProject}
-        options={[...Object.keys(coreData.projects), "New project..."]}
+        options={[
+          ...Object.keys(coreData?.projects || []),
+          "New project...",
+        ].filter((opt) => opt != null && opt != "null")}
         placeholder="Select a project…"
         itemComponent={(props) => (
           <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>
