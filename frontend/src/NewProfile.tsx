@@ -3,7 +3,7 @@ import { TextField, TextFieldInput } from "./components/ui/text-field";
 import { Component, createSignal } from "solid-js";
 import { useProject } from "./ActiveProfiles";
 import { Button } from "./components/ui/button";
-import { CreateNewProfile } from "../wailsjs/go/main/App";
+import { CreateNewProfile, SaveProfile } from "../wailsjs/go/main/App";
 import { useProfile } from "./ProfilesStore";
 import { writeClipboard } from "@solid-primitives/clipboard";
 import { toaster } from "@kobalte/core";
@@ -20,7 +20,7 @@ const NewProfile: Component = () => {
   const { coreData, setCoreData } = useProfile();
   const [newProfile, setNewProfile] = createSignal("");
   return (
-    <div class="fixed bottom-0 w-[100%] bg-gray-50 dark:bg-black pt-2 pb-2">
+    <div class="fixed bottom-0 w-[100%] bg-bottom border-t border-gray-600 pt-2 pb-2">
       <footer class="space-y-2 items-center w-[27%] m-auto">
         <div id={"inputDiv"}>
           <TextField onChange={(newValue: string) => setNewProfile(newValue)}>
@@ -39,37 +39,36 @@ const NewProfile: Component = () => {
           <Button
             id={"AddMultiple"}
             onClick={() => {
-              const newProfiles: Promise<main.ProfileEntity>[] = newProfile()
+              const newProfiles: main.ProfileEntity[] = newProfile()
                 .replace(" ", "")
                 .replace("\n", "")
                 .replace("\t", "")
                 .split(",")
                 .filter((val) => val != "")
-                .map(async (profileValue) => {
-                  const id = await CreateNewProfile(
-                    coreData.currentProject,
-                    profileValue,
-                  );
+                .map((profileValue) => {
                   return {
-                    id: id,
+                    id: -1,
                     isSelected: true,
                     profileName: profileValue,
                   };
                 });
-              Promise.all(newProfiles).then((profiles) => {
-                setProject((old) => {
-                  let mergedProfiles = [...old.profiles, ...profiles];
-                  let newProject = new main.Project();
-                  newProject.profiles = mergedProfiles;
-                  return newProject;
-                });
-                setNewProfile("");
-              });
+              CreateNewProfile(newProfiles, coreData.currentProject).then(
+                (profiles: main.ProfileEntity[]) => {
+                  setProject((old) => {
+                    let mergedProfiles = [...old.profiles, ...profiles];
+                    let newProject = new main.Project();
+                    newProject.profiles = mergedProfiles;
+                    return newProject;
+                  });
+                  setNewProfile("");
+                },
+              );
             }}
           >
             Add Profile/s
           </Button>
           <Button
+            variant="secondary"
             onClick={() => {
               let profilesString = project()
                 .profiles.filter((profile) => profile.isSelected)

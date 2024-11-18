@@ -32,6 +32,7 @@ const Profile: Component<{
         />
       </TextField>
       <Button
+        variant="destructive"
         id={"Button" + props.id}
         onClick={() => props.onDelete(props.profile)}
       >

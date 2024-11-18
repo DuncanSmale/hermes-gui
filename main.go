@@ -74,6 +74,7 @@ func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 	Connect(connectionString)
+	defer DB.Close()
 
 	// Create application with options
 	err := wails.Run(&options.App{
@@ -166,7 +167,6 @@ type ProfileDb struct {
 }
 
 func getAllProfiles() (CoreData, error) {
-	Connect(connectionString)
 	var allProfiles []ProjectDbRow
 	rows, err := DB.QueryContext(
 		context.Background(),
@@ -217,7 +217,11 @@ func (a *App) LoadInitialData() *CoreData {
 }
 
 func (a *App) SaveProject(newProjectName string, oldProjectName string) {
-	DB.Exec("UPDATE profile SET projectName = ? where projectName = ? ", newProjectName, oldProjectName)
+	tx, err := DB.Begin()
+	checkError(err)
+	tx.Exec("UPDATE profile SET projectName = ? where projectName = ? ", newProjectName, oldProjectName)
+	err = tx.Commit()
+	checkError(err)
 }
 
 func (a *App) SaveProfile(newProfileName string, isSelected bool, id int) {
@@ -226,7 +230,11 @@ func (a *App) SaveProfile(newProfileName string, isSelected bool, id int) {
   SET profileName = ?, isSelected = ? 
   WHERE id = ?
   `
-	DB.Exec(query, newProfileName, isSelected, id)
+	tx, err := DB.Begin()
+	checkError(err)
+	tx.Exec(query, newProfileName, isSelected, id)
+	err = tx.Commit()
+	checkError(err)
 }
 
 func (a *App) DeleteProfile(id int) {
@@ -234,18 +242,33 @@ func (a *App) DeleteProfile(id int) {
   DELETE FROM profile 
   WHERE id = ?
   `
-	DB.Exec(query, id)
+	tx, err := DB.Begin()
+	checkError(err)
+	tx.Exec(query, id)
+	err = tx.Commit()
+	checkError(err)
 }
 
-func (a *App) CreateNewProfile(projectName string, profileName string) int64 {
+func (a *App) CreateNewProfile(profiles []ProfileEntity, projectName string) []ProfileEntity {
 	query := `
   INSERT INTO profile 
   (projectName, profileName, isSelected)
   values (?, ?, true)
   `
-	result, err := DB.Exec(query, projectName, profileName)
+	tx, err := DB.Begin()
 	checkError(err)
-	id, err := result.LastInsertId()
+
+	defer tx.Commit()
+
+	for k, v := range profiles {
+		result, err := tx.Exec(query, projectName, v.ProfileName)
+		checkError(err)
+		id, err := result.LastInsertId()
+		checkError(err)
+
+		profiles[k].Id = int(id)
+	}
 	checkError(err)
-	return id
+	log.Print("returning profiles ", profiles)
+	return profiles
 }
