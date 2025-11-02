@@ -11,12 +11,18 @@ dependencies:
   '@solid-primitives/scheduled':
     specifier: ^1.4.4
     version: 1.4.4(solid-js@1.9.3)
+  '@solid-primitives/transition-group':
+    specifier: ^1.0.5
+    version: 1.0.5(solid-js@1.9.3)
   '@tanstack/solid-query':
     specifier: ^5.60.5
     version: 5.60.5(solid-js@1.9.3)
   solid-query:
     specifier: ^0.0.7
     version: 0.0.7(solid-js@1.9.3)
+  solid-transition-group:
+    specifier: ^0.2.3
+    version: 0.2.3(solid-js@1.9.3)
 
 packages:
 
@@ -29,8 +35,25 @@ packages:
       solid-js: 1.9.3
     dev: false
 
+  /@solid-primitives/refs@1.0.8(solid-js@1.9.3):
+    resolution: {integrity: sha512-+jIsWG8/nYvhaCoG2Vg6CJOLgTmPKFbaCrNQKWfChalgUf9WrVxWw0CdJb3yX15n5lUcQ0jBo6qYtuVVmBLpBw==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.2.3(solid-js@1.9.3)
+      solid-js: 1.9.3
+    dev: false
+
   /@solid-primitives/scheduled@1.4.4(solid-js@1.9.3):
     resolution: {integrity: sha512-BTGdFP7t+s7RSak+s1u0eTix4lHP23MrbGkgQTFlt1E+4fmnD/bEx3ZfNW7Grylz3GXgKyXrgDKA7jQ/wuWKgA==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      solid-js: 1.9.3
+    dev: false
+
+  /@solid-primitives/transition-group@1.0.5(solid-js@1.9.3):
+    resolution: {integrity: sha512-G3FuqvL13kQ55WzWPX2ewiXdZ/1iboiX53195sq7bbkDbXqP6TYKiadwEdsaDogW5rPnPYAym3+xnsNplQJRKQ==}
     peerDependencies:
       solid-js: ^1.6.12
     dependencies:
@@ -89,5 +112,16 @@ packages:
     peerDependencies:
       solid-js: '*'
     dependencies:
+      solid-js: 1.9.3
+    dev: false
+
+  /solid-transition-group@0.2.3(solid-js@1.9.3):
+    resolution: {integrity: sha512-iB72c9N5Kz9ykRqIXl0lQohOau4t0dhel9kjwFvx81UZJbVwaChMuBuyhiZmK24b8aKEK0w3uFM96ZxzcyZGdg==}
+    engines: {node: '>=18.0.0', pnpm: '>=8.6.0'}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/refs': 1.0.8(solid-js@1.9.3)
+      '@solid-primitives/transition-group': 1.0.5(solid-js@1.9.3)
       solid-js: 1.9.3
     dev: false

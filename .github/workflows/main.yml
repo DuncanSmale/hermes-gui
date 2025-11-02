@@ -22,14 +22,10 @@ jobs:
             platform: "linux/amd64"
             os: "ubuntu-latest"
             nsis: true
-          - name: "hermes-gui-installer.exe"
-            platform: "windows/amd64"
-            os: "windows-latest"
-            nsis: true
           - name: "hermes-gui.exe"
             platform: "windows/amd64"
             os: "windows-latest"
-            nsis: false
+            nsis: true
           - name: "hermes-gui-darwin"
             platform: "darwin/universal"
             os: "macos-latest"
@@ -43,6 +39,7 @@ jobs:
           submodules: recursive
 
       - run: npm add @solid-primitives/clipboard
+      - run: npm add @solid-primitives/transition-group
       - name: Build wails
         uses: dAppServer/wails-build-action@v2.2
         id: build

@@ -1,6 +1,7 @@
 import { debounce } from "@solid-primitives/scheduled";
 import {
   Component,
+  For,
   Index,
   Show,
   createEffect,
@@ -19,6 +20,7 @@ import { useProject } from "./ActiveProfiles.jsx";
 import Profile from "./Profile";
 import { useProfile } from "./ProfilesStore";
 import { TextField, TextFieldInput } from "./components/ui/text-field";
+import { TransitionGroup } from "solid-transition-group";
 
 const Profiles: Component = () => {
   const { project, setProject } = useProject();
@@ -133,16 +135,23 @@ const Profiles: Component = () => {
         </TextField>
       </Show>
       <main class="flex-grow space-y-4 mb-[10%]">
-        <Index each={profiles()} fallback={<div>No Profiles</div>}>
+        {/* <TransitionGroup> */}
+        <For
+          each={profiles().toSorted((a, b) =>
+            a.profileName > b.profileName ? 1 : -1,
+          )}
+          fallback={<div>No Profiles</div>}
+        >
           {(item, index) => (
             <Profile
-              id={`${index}`}
-              profile={item()}
+              id={`${index()}`}
+              profile={item}
               onDelete={(profile) => removeProfile(profile)}
               onChange={(profile) => triggerProfileUpdate(profile)}
             />
           )}
-        </Index>
+        </For>
+        {/* </TransitionGroup> */}
       </main>
     </>
   );

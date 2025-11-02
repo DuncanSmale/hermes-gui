@@ -2,7 +2,9 @@
 	"dependencies": {
 		"@solid-primitives/clipboard": "^1.5.10",
 		"@solid-primitives/scheduled": "^1.4.4",
+		"@solid-primitives/transition-group": "^1.0.5",
 		"@tanstack/solid-query": "^5.60.5",
-		"solid-query": "^0.0.7"
+		"solid-query": "^0.0.7",
+		"solid-transition-group": "^0.2.3"
 	}
 }
